@@ -1217,7 +1217,7 @@ udx_stream_write (udx_stream_write_t *req, udx_stream_t *handle, const uv_buf_t 
   req->on_ack = ack_cb;
 
   // if this is the first inflight packet, we should "restart" rto timer
-  if (handle->inflight == 0) {
+  if (handle->socket != NULL && handle->inflight == 0) {
     handle->rto_timeout = get_milliseconds() + handle->rto;
   }
 
@@ -1248,7 +1248,8 @@ udx_stream_write (udx_stream_write_t *req, udx_stream_t *handle, const uv_buf_t 
 
     // If we are not the first packet in the queue, wait to send us until the queue is flushed...
     if (handle->pkts_waiting++ > 0) continue;
-    err = send_data_packet(handle, pkt);
+
+    if (handle->socket != NULL) err = send_data_packet(handle, pkt);
   } while (buf.len > 0 || err < 0);
 
   return err;
@@ -1291,7 +1292,8 @@ udx_stream_write_end (udx_stream_write_t *req, udx_stream_t *handle, const uv_bu
 
     // If we are not the first packet in the queue, wait to send us until the queue is flushed...
     if (handle->pkts_waiting++ > 0) continue;
-    err = send_data_packet(handle, pkt);
+
+    if (handle->socket != NULL) err = send_data_packet(handle, pkt);
   } while (buf.len > 0 || err < 0);
 
   return err;
